@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Yan Li - Portfolio</title>
+  <!-- 引入 Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 引入 React 和 ReactDOM -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <!-- 引入 Babel 用于解析 JSX -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  
+  <style>
+    /* 自定义滚动条样式 */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+    /* 简单的淡入动画 */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+      animation: fadeIn 0.8s ease-out forwards;
+    }
+    /* 头像浮动动画 */
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(2deg); }
+      50% { transform: translateY(-10px) rotate(0deg); }
+    }
+    .animate-float {
+      animation: float 6s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // --- 图标组件定义 ---
+    const createIcon = (path) => ({ size = 24, className = "", ...props }) => (
+      <svg 
+        xmlns="http://www.w3.org/2000/svg" 
+        width={size} 
+        height={size} 
+        viewBox="0 0 24 24" 
+        fill="none" 
+        stroke="currentColor" 
+        strokeWidth="2" 
+        strokeLinecap="round" 
+        strokeLinejoin="round" 
+        className={className}
+        {...props}
+      >
+        <g dangerouslySetInnerHTML={{ __html: path }} />
+      </svg>
+    );
+
+    const Github = createIcon('<path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/>');
+    const Linkedin = createIcon('<path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/>');
+    const Mail = createIcon('<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>');
+    const ExternalLink = createIcon('<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/>');
+    const Briefcase = createIcon('<rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>');
+    const User = createIcon('<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>');
+    const Send = createIcon('<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>');
+    const Menu = createIcon('<line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/>');
+    const X = createIcon('<path d="M18 6 6 18"/><path d="m6 6 12 12"/>');
+    const ChevronDown = createIcon('<path d="m6 9 6 6 6-6"/>');
+    const Globe = createIcon('<circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/>');
+    const BookOpen = createIcon('<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>');
+    const PenTool = createIcon('<path d="m12 19 7-7 3 3-7 7-3-3z"/><path d="m18 13-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="m2 2 7.586 7.586"/><circle cx="11" cy="11" r="2"/>');
+    const BarChart3 = createIcon('<path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>');
+    const GraduationCap = createIcon('<path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>');
+    const Languages = createIcon('<path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/>');
+
+    // --- 核心数据配置 (包含图片链接) ---
+    const PORTFOLIO_DATA = {
+      en: {
+        ui: {
+          nav: { about: 'About', skills: 'Skills', experience: 'Experience', projects: 'Research', contact: 'Contact', resume: 'Resume' },
+          hero: { available: 'Open to Opportunities', viewWork: 'View Research', contact: 'Contact Me' },
+          about: { title: 'About Me', education: 'Education' },
+          skills: { title: 'Capabilities & Skills', subtitle: 'My technical toolkit for research and creative design.' },
+          experience: { title: 'Professional Experience', subtitle: 'Leadership, Coordination, and Translation roles.' },
+          projects: { title: 'Research & Analysis', subtitle: 'Selected policy research and data projects.', viewDetails: 'View Details' },
+          contact: { title: 'Ready to collaborate?', subtitle: 'I am open to opportunities in public administration, policy research, and international relations.', button: 'Get in Touch', emailText: 'Open to Opportunities' },
+          footer: 'All rights reserved.'
+        },
+        personal: {
+          name: "Yan Li",
+          title: "Public Administration & Trade Policy Analyst",
+          tagline: "Bridging International Trade and Public Administration through data-driven research and cross-cultural communication.",
+          email: "834220743@qq.com",
+          location: "Vienna, Austria / Guangzhou, CN",
+          // 提示：你可以把这里的网址换成你自己的照片文件路径，例如 "./my-photo.jpg"
+          avatar: "./un_PNG20.png", 
+          about: "I am a motivated multilingual professional bridging International Trade and Public Administration. Having completed my dual Master's degrees at UMD and GDUFS in 2025, I am currently interning at UNODC Headquarters in Vienna. I possess strong problem-solving abilities and hands-on experience in data visualization, report drafting, and policy research.",
+          social: { github: "#", linkedin: "#", resume: "#" }
+        },
+        education: [
+          {
+            school: "University of Maryland, College Park",
+            degree: "Master of Professional Studies - Public Administration",
+            period: "Aug. 2024 - Aug. 2025",
+            // 
+            logo: "https://upload.wikimedia.org/wikipedia/en/thumb/3/3e/University_of_Maryland_seal.svg/1200px-University_of_Maryland_seal.svg.png"
+          },
+          {
+            school: "Guangdong University of Foreign Studies (GDUFS)",
+            degree: "Master of Economics (Int'l Trade)",
+            period: "Sep. 2022 - June 2025",
+            // 
+            logo: "./gdufs.png"
+          },
+          {
+            school: "Guangdong University of Foreign Studies (GDUFS)",
+            degree: "BA English Translation & BEcon International Trade",
+            period: "Sep. 2018 - June 2022",
+            // 
+            logo: "./gdufs.png"
+          }
+        ],
+        skills: [
+          { category: "Data & Analysis", items: ["Stata", "Tableau", "Python", "Excel", "Program Evaluation", "Cost-Benefit Analysis"] },
+          { category: "Languages", items: ["Chinese (Native)", "English (Advanced)", "French (Beginner)", "Japanese (Beginner)", "Cantonese"] },
+          { category: "Creative & Tools", items: ["Canva", "Video Editing", "Photography", "Social Media Design", "Public Management"] }
+        ],
+        experience: [
+          {
+            id: 0,
+            role: "Intern (HQ)",
+            company: "United Nations Office on Drugs and Crime (UNODC)",
+            period: "Oct. 2025 - Apr. 2026",
+            description: "Based in Vienna HQ. Designed official Twitter content and visuals. Drafted meeting minutes for the Waste Trafficking report. Conducted data visualization and authored the research report on Seychelles.",
+            technologies: ["Social Media Design", "Data Viz", "Report Drafting", "Research"],
+            // 
+            logo: "./un_PNG20.png"
+          },
+          {
+            id: 1,
+            role: "Translator & Team Leader",
+            company: "United Nations Office on Drugs and Crime (UNODC)",
+            period: "June 2023 - May 2024",
+            description: "Led the Chinese translation of the 'Corruption, Peace and Security' curriculum. Managed workflows for the team and coordinated logistics for the Anti-Corruption Lecture Series.",
+            technologies: ["Translation", "Project Management", "Leadership"],
+            // 
+            logo: "./un_PNG20.png"
+          },
+          {
+            id: 2,
+            role: "President",
+            company: "Int'l Org. & Governance Association (GDUFS)",
+            period: "May 2023 - Apr. 2024",
+            description: "Managed member recruitment for 150+ students and operated official media channels with 800+ followers. Organized the Knowledge Contest on International Organizations.",
+            technologies: ["Event Planning", "Team Leadership", "Media Operations"],
+            // 
+            logo: "./gioig.png"
+          },
+          {
+            id: 3,
+            role: "Visual Design & Conference Assistant",
+            company: "School of International Governance Innovation (SIGI)",
+            period: "Sep. 2022 - June 2024",
+            description: "Organized conferences and meetings, preparing briefs and minutes. Managed social media (2000+ followers) and produced visual content like posters and videos.",
+            technologies: ["Visual Design", "Conference Org", "Social Media"],
+             // 
+            logo: "./sigi.png"
+          },
+          {
+            id: 4,
+            role: "Exhibition Curator & Coordinator",
+            company: "UNCTAD Month Event",
+            period: "Nov. 2022 - March 2024",
+            description: "Led a 20-person team in designing and curating exhibitions recognized by UNCTAD senior officers. Successfully coordinated lectures and visual presentations.",
+            technologies: ["Curation", "Coordination", "Public Relations"],
+            // 
+            logo: "./un_PNG20.png"
+          },
+          {
+            id: 5,
+            role: "Team Leader / Liaison",
+            company: "Global Mayors' Forum (Sub-Forum VII)",
+            period: "Nov. 2023 - Dec. 2023",
+            description: "Served as international liaison for the Urban Social Safety Nets sub-forum (200 participants). Coordinated with Foreign Affairs Office and led translation team.",
+            technologies: ["Liaison", "Translation", "Event Coordination"],
+            },
+          {
+            id: 6,
+            role: "Conference Assistant & Exhibition Curator",
+            company: "China Int'l Economic Law Annual Conference",
+            period: "Feb. 2023 - Dec. 2023",
+            description: "Led the design/curation of economic law books exhibition. Conducted liaison with commercial partners and managed conference materials and venue control.",
+            technologies: ["Curation", "Logistics", "Partner Liaison"],
+                      },
+          {
+            id: 7,
+            role: "Conference Assistant",
+            company: "Guangdong Optical Society",
+            period: "Sep. 2021 - Jan. 2022",
+            description: "Coordinated preparations for the annual meeting (online & offline). Engaged in marketing phases and managed official website updates.",
+            technologies: ["Marketing", "Website Mgmt", "Coordination"],
+            // 
+            logo: "./gdos.png"
+          }
+        ],
+        projects: [
+          {
+            id: 1,
+            title: "China's Partnership Diplomacy (Thesis)",
+            description: "Quantified diplomatic relations using Python and Stata to construct a novel dataset. Evaluated the causal effect of partnership agreements on economic productivity.",
+            tags: ["Python", "Stata", "Econometrics", "Research"],
+            link: "#",
+            image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=800" 
+          },
+          {
+            id: 2,
+            title: "Global Value Chains & Digital Trade",
+            description: "Conducted in-depth policy research on industrial chain restructuring in Guangdong. Designed survey instruments to analyze corporate digital transformation.",
+            tags: ["Policy Research", "Survey Design", "Data Analysis"],
+            link: "#",
+            image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=800"
+          },
+          {
+            id: 3,
+            title: "BRICS & Global Economic Governance",
+            description: "Co-authored policy briefs for the BRICS Think Tank Summit. Used Tableau and Excel to visualize economic data from UNCTAD and OECD sources.",
+            tags: ["Tableau", "Visualization", "Diplomatic Analysis"],
+            link: "#",
+            image: "https://images.unsplash.com/photo-1529101091760-61df6be5d187?auto=format&fit=crop&q=80&w=800"
+          }
+        ]
+      },
+      zh: {
+        // ... existing UI config ...
+        personal: {
+          name: "Yan Li (李)",
+          // ...
+          location: "奥地利维也纳 / 中国广州",
+          
+          // 👇👇👇 3. 中文版这里也要改一下 (或者你可以直接复制英文版的链接) 👇👇👇
+          avatar: "./profile.jpg",
+          
+          about: "我是一名拥有多语言背景的专业人士...",
+          social: { github: "#", linkedin: "#", resume: "#" }
+        },
+        education: [
+          {
+            school: "马里兰大学 (University of Maryland)",
+            degree: "公共行政专业硕士 (MPS - Public Administration)",
+            period: "2024年8月 - 2025年8月",
+             // 
+            logo: "https://upload.wikimedia.org/wikipedia/en/thumb/3/3e/University_of_Maryland_seal.svg/1200px-University_of_Maryland_seal.svg.png"
+          },
+          {
+            school: "广东外语外贸大学 (GDUFS)",
+            degree: "经济学硕士 (国际贸易)",
+            period: "2022年9月 - 2025年6月",
+            // 
+            logo: "https://upload.wikimedia.org/wikipedia/en/thumb/3/3a/Guangdong_University_of_Foreign_Studies_logo.svg/1200px-Guangdong_University_of_Foreign_Studies_logo.svg.png"
+          },
+          {
+            school: "广东外语外贸大学 (GDUFS)",
+            degree: "英语翻译学士 & 国际贸易经济学士",
+            period: "2018年9月 - 2022年6月",
+            // 
+            logo: "https://upload.wikimedia.org/wikipedia/en/thumb/3/3a/Guangdong_University_of_Foreign_Studies_logo.svg/1200px-Guangdong_University_of_Foreign_Studies_logo.svg.png"
+          }
+        ],
+        skills: [
+          { category: "数据与分析", items: ["Stata", "Tableau", "Python", "Excel", "项目评估", "成本效益分析"] },
+          { category: "语言能力", items: ["中文 (母语)", "英语 (高级)", "法语 (初级)", "日语 (初级)", "粤语"] },
+          { category: "创意与工具", items: ["Canva", "视频剪辑", "摄影", "新媒体设计", "公共管理"] }
+        ],
+        experience: [
+          {
+            id: 0,
+            role: "总部实习生",
+            company: "联合国毒品和犯罪问题办公室 (UNODC)",
+            period: "2025年10月 - 2026年4月",
+            description: "常驻维也纳总部。负责官方推特(Twitter)的视觉设计。撰写关于废弃物贩运(Waste Trafficking)报告的会议纪要。进行数据可视化处理，并起草关于塞舌尔(Seychelles)的研究报告。",
+            technologies: ["新媒体设计", "数据可视化", "报告撰写", "政策研究"],
+            // 
+            logo: "https://www.unodc.org/res/images/unodc-logo.png"
+          },
+          {
+            id: 1,
+            role: "翻译与团队负责人",
+            company: "联合国毒品和犯罪问题办公室 (UNODC)",
+            period: "2023年6月 - 2024年5月",
+            description: "负责“腐败、和平与安全”课程的中文翻译工作。管理翻译团队的工作流程，并协调反腐败系列讲座的后勤工作。",
+            technologies: ["翻译", "项目管理", "团队领导"],
+            // 
+            logo: "https://www.unodc.org/res/images/unodc-logo.png"
+          },
+          {
+            id: 2,
+            role: "会长",
+            company: "广外国际组织与全球治理协会",
+            period: "2023年5月 - 2024年4月",
+            description: "管理150多名成员的招募工作，运营拥有800多名关注者的官方媒体账号。组织策划了国际组织知识竞赛。",
+            technologies: ["活动策划", "团队领导", "新媒体运营"],
+            // 
+            logo: "https://upload.wikimedia.org/wikipedia/en/thumb/3/3a/Guangdong_University_of_Foreign_Studies_logo.svg/1200px-Guangdong_University_of_Foreign_Studies_logo.svg.png"
+          },
+          {
+            id: 3,
+            role: "视觉设计与会议助理",
+            company: "国际治理创新学院 (SIGI)",
+            period: "2022年9月 - 2024年6月",
+            description: "组织会议与讲座，撰写会议纪要与工作简报。管理拥有2000+关注者的社交媒体账号，负责视频剪辑与海报设计等视觉工作。",
+            technologies: ["视觉设计", "会议组织", "新媒体"],
+             // 
+            logo: "https://upload.wikimedia.org/wikipedia/en/thumb/3/3a/Guangdong_University_of_Foreign_Studies_logo.svg/1200px-Guangdong_University_of_Foreign_Studies_logo.svg.png"
+          },
+          {
+            id: 4,
+            role: "展览策展人与协调员",
+            company: "贸发会议 (UNCTAD) 主题月活动",
+            period: "2022年11月 - 2024年3月",
+            description: "带领20人团队设计并策划展览，获得UNCTAD高级官员认可。成功协调讲座和视觉展示活动。",
+            technologies: ["策展", "协调工作", "公共关系"],
+            // 
+            logo: "https://unctad.org/sites/default/files/2021-03/UNCTAD_logo_400.png"
+          },
+          {
+            id: 5,
+            role: "组长 / 国际联络员",
+            company: "全球市长论坛 (城市社会保障分论坛)",
+            period: "2023年11月 - 2023年12月",
+            description: "担任分论坛（200人参与）国际联络员。与广州市外事办沟通协调筹备工作，带领10人团队翻译会议材料。",
+            technologies: ["联络", "翻译", "会议协调"],
+            // 
+            logo: "https://www.guangzhouaward.org/images/logo.png"
+          },
+          {
+            id: 6,
+            role: "会议助理 & 策展人",
+            company: "中国国际经济法年会",
+            period: "2023年2月 - 2023年12月",
+            description: "带领8人团队设计并策划经济法书籍展。与商业合作伙伴进行长期联络，参与会议全流程管理、场地控制及材料整理。",
+            technologies: ["策展", "后勤管理", "商务联络"],
+             // 
+            logo: "https://upload.wikimedia.org/wikipedia/en/thumb/3/3a/Guangdong_University_of_Foreign_Studies_logo.svg/1200px-Guangdong_University_of_Foreign_Studies_logo.svg.png"
+          },
+          {
+            id: 7,
+            role: "会议助理",
+            company: "广东省光学学会",
+            period: "2021年9月 - 2022年1月",
+            description: "协调筹备学会年会（线上线下）。参与年会的市场推广阶段，以及官方网站的管理与更新工作。",
+            technologies: ["市场推广", "网站管理", "统筹"],
+            // 
+            logo: "https://upload.wikimedia.org/wikipedia/en/thumb/3/3a/Guangdong_University_of_Foreign_Studies_logo.svg/1200px-Guangdong_University_of_Foreign_Studies_logo.svg.png"
+          }
+        ],
+        projects: [
+          {
+            id: 1,
+            title: "中国伙伴关系外交 (硕士论文)",
+            description: "利用Python和Stata构建外交关系数据集，量化外交关系。评估伙伴关系协议对经济生产力的因果效应。",
+            tags: ["Python", "Stata", "计量经济学", "学术研究"],
+            link: "#",
+            image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=800"
+          },
+          {
+            id: 2,
+            title: "全球价值链与数字贸易",
+            description: "针对广东产业链重组进行深入政策研究。设计调查问卷以分析企业数字化转型。",
+            tags: ["政策研究", "问卷设计", "数据分析"],
+            link: "#",
+            image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=800"
+          },
+          {
+            id: 3,
+            title: "金砖国家与全球经济治理",
+            description: "为金砖国家智库峰会撰写政策简报。使用Tableau和Excel将UNCTAD和OECD的经济数据可视化。",
+            tags: ["Tableau", "数据可视化", "外交分析"],
+            link: "#",
+            image: "https://images.unsplash.com/photo-1529101091760-61df6be5d187?auto=format&fit=crop&q=80&w=800"
+          }
+        ]
+      }
+    };
+
+    // --- React 组件部分 ---
+
+    const Navigation = ({ activeSection, scrollToSection, isScrolled, language, setLanguage, ui }) => {
+      const [isOpen, setIsOpen] = useState(false);
+      const navLinks = [
+        { name: ui.nav.about, id: 'about' },
+        { name: ui.nav.skills, id: 'skills' },
+        { name: ui.nav.experience, id: 'experience' },
+        { name: ui.nav.projects, id: 'projects' },
+        { name: ui.nav.contact, id: 'contact' },
+      ];
+
+      const toggleLanguage = () => {
+        setLanguage(prev => prev === 'en' ? 'zh' : 'en');
+        setIsOpen(false);
+      };
+
+      return (
+        <nav className={`fixed w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-white/90 backdrop-blur-md shadow-sm py-4' : 'bg-transparent py-6'}`}>
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center">
+              <div 
+                className="text-2xl font-bold text-slate-800 cursor-pointer flex items-center gap-2"
+                onClick={() => scrollToSection('hero')}
+              >
+                <div className="p-1.5 bg-blue-600 rounded-lg text-white">
+                   <Globe size={20} />
+                </div>
+                <span className="font-serif tracking-wide">{language === 'en' ? 'Yan' : 'Li'}<span className="text-blue-600">.Li</span></span>
+              </div>
+
+              {/* Desktop Nav */}
+              <div className="hidden md:flex items-center space-x-8">
+                {navLinks.map((link) => (
+                  <button
+                    key={link.name}
+                    onClick={() => scrollToSection(link.id)}
+                    className={`text-sm font-medium transition-colors hover:text-blue-600 relative group ${
+                      activeSection === link.id ? 'text-blue-600' : 'text-slate-600'
+                    }`}
+                  >
+                    {link.name}
+                    <span className={`absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full ${activeSection === link.id ? 'w-full' : ''}`}></span>
+                  </button>
+                ))}
+                
+                {/* Language Toggle Desktop */}
+                <button 
+                  onClick={toggleLanguage}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-blue-600 transition-colors text-sm font-medium border border-slate-200"
+                >
+                  <Languages size={16} />
+                  <span>{language === 'en' ? 'CN' : 'EN'}</span>
+                </button>
+
+                <a 
+                  href={PORTFOLIO_DATA[language].personal.social.resume}
+                  className="px-5 py-2 rounded-full bg-slate-900 text-white text-sm font-medium hover:bg-blue-700 transition-all transform hover:-translate-y-0.5 shadow-lg shadow-slate-300"
+                >
+                  {ui.nav.resume}
+                </a>
+              </div>
+
+              {/* Mobile Menu Button */}
+              <div className="md:hidden flex items-center gap-4">
+                <button 
+                  onClick={toggleLanguage}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 text-xs font-medium"
+                >
+                  {language === 'en' ? 'CN' : 'EN'}
+                </button>
+                <button onClick={() => setIsOpen(!isOpen)} className="text-slate-600">
+                  {isOpen ? <X size={24} /> : <Menu size={24} />}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile Menu */}
+          {isOpen && (
+            <div className="md:hidden absolute top-full left-0 w-full bg-white border-b border-slate-100 shadow-lg py-4">
+              <div className="flex flex-col space-y-4 px-6">
+                {navLinks.map((link) => (
+                  <button
+                    key={link.name}
+                    onClick={() => {
+                      scrollToSection(link.id);
+                      setIsOpen(false);
+                    }}
+                    className="text-left text-slate-600 font-medium hover:text-blue-600"
+                  >
+                    {link.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </nav>
+      );
+    };
+
+    const Hero = ({ scrollToSection, data, ui }) => {
+      return (
+        <section id="hero" className="min-h-screen flex items-center justify-center pt-24 pb-12 bg-slate-50 relative overflow-hidden">
+          {/* Background Texture (World Map Abstract) */}
+          <div className="absolute inset-0 opacity-5 pointer-events-none">
+             <svg className="w-full h-full text-slate-900" fill="currentColor">
+                <pattern id="pattern-circles" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+                  <circle cx="20" cy="20" r="1.5"></circle>
+                </pattern>
+                <rect x="0" y="0" width="100%" height="100%" fill="url(#pattern-circles)"></rect>
+             </svg>
+          </div>
+
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col-reverse md:flex-row items-center gap-12 lg:gap-20 relative z-10">
+            <div className="flex-1 text-center md:text-left space-y-8 animate-fade-in">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-50 text-blue-700 text-sm font-medium border border-blue-100">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                </span>
+                {ui.hero.available}
+              </div>
+              
+              <div className="space-y-4">
+                <h1 className="text-5xl md:text-7xl font-bold text-slate-900 tracking-tight leading-tight">
+                  Hi, I'm <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">{data.name}</span>
+                </h1>
+                <p className="text-xl md:text-2xl text-slate-600 max-w-2xl font-light">
+                  {data.title}.
+                </p>
+                <p className="text-lg text-slate-500 max-w-xl leading-relaxed">
+                  {data.tagline}
+                </p>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start pt-4">
+                <button 
+                  onClick={() => scrollToSection('projects')}
+                  className="px-8 py-4 rounded-full bg-blue-600 text-white font-medium hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 flex items-center justify-center gap-2 hover:scale-105"
+                >
+                  {ui.hero.viewWork} <BookOpen size={18} />
+                </button>
+                <button 
+                  onClick={() => scrollToSection('contact')}
+                  className="px-8 py-4 rounded-full bg-white text-slate-700 border border-slate-200 font-medium hover:border-slate-400 hover:bg-slate-50 transition-all flex items-center justify-center gap-2 hover:scale-105"
+                >
+                  {ui.hero.contact} <Mail size={18} />
+                </button>
+              </div>
+
+              <div className="flex gap-6 justify-center md:justify-start pt-6 text-slate-400">
+                <a href={`mailto:${data.email}`} className="hover:text-slate-900 transition-colors flex items-center gap-2 text-sm">
+                  <Mail size={20} /> {data.email}
+                </a>
+              </div>
+            </div>
+
+            <div className="flex-1 relative w-full max-w-md">
+              {/* Background Blob */}
+              <div className="absolute top-0 right-0 w-72 h-72 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
+              <div className="absolute -bottom-8 -left-8 w-72 h-72 bg-indigo-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
+              
+              {/* Image Container */}
+              <div className="relative rounded-2xl shadow-2xl bg-white p-3 rotate-2 hover:rotate-0 transition-all duration-500 animate-float">
+                <div className="relative overflow-hidden rounded-xl aspect-square bg-slate-200">
+                  {data.avatar ? (
+                    <img 
+                      src={data.avatar} 
+                      alt={data.name} 
+                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-700"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                      }}
+                    />
+                  ) : null}
+                  {/* Fallback if image fails */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 bg-slate-100" style={{display: data.avatar ? 'none' : 'flex'}}>
+                     <User size={80} strokeWidth={1} />
+                     <span className="mt-4 text-sm font-medium">Add Photo Here</span>
+                  </div>
+                </div>
+                
+                {/* Floating Badge */}
+                <div className="absolute -bottom-6 -right-6 bg-white p-4 rounded-xl shadow-xl border border-slate-100 flex items-center gap-3 animate-bounce duration-[3000ms]">
+                   <div className="bg-green-100 p-2 rounded-full text-green-600">
+                     <Briefcase size={20} />
+                   </div>
+                   <div>
+                     <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Status</p>
+                     <p className="text-sm font-bold text-slate-900">Open to Work</p>
+                   </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce text-slate-400 cursor-pointer" onClick={() => scrollToSection('about')}>
+            <ChevronDown size={24} />
+          </div>
+        </section>
+      );
+    };
+
+    const About = ({ data, ui }) => {
+      return (
+        <section id="about" className="py-24 bg-white">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl font-bold text-slate-900">{ui.about.title}</h2>
+              <div className="w-16 h-1 bg-blue-600 mx-auto mt-4 rounded-full"></div>
+            </div>
+            
+            <div className="bg-white rounded-2xl p-8 md:p-12 border border-slate-100 shadow-lg shadow-slate-100/50">
+              <p className="text-lg text-slate-700 leading-loose mb-10 text-center font-light">
+                {data.about}
+              </p>
+              
+              <div className="border-t border-slate-100 pt-10">
+                <h3 className="text-xl font-bold text-slate-900 mb-8 flex items-center gap-3">
+                  <div className="p-2 bg-blue-50 rounded-lg text-blue-600"><GraduationCap size={24} /></div>
+                  {ui.about.education}
+                </h3>
+                <div className="space-y-6">
+                  {data.education.map((edu, idx) => (
+                    <div key={idx} className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 hover:bg-slate-50 rounded-xl transition-colors border border-transparent hover:border-slate-100">
+                      <div className="flex items-center gap-4">
+                        {edu.logo && (
+                          <img src={edu.logo} alt={`${edu.school} logo`} className="w-12 h-12 object-contain" />
+                        )}
+                        <div>
+                          <h4 className="font-bold text-slate-900 text-lg">{edu.school}</h4>
+                          <p className="text-slate-600">{edu.degree}</p>
+                        </div>
+                      </div>
+                      <span className="text-blue-700 text-sm font-semibold bg-blue-50 px-4 py-1.5 rounded-full whitespace-nowrap self-start md:self-center">
+                        {edu.period}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      );
+    };
+
+    const Skills = ({ data, ui }) => {
+      return (
+        <section id="skills" className="py-24 bg-slate-50">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl font-bold text-slate-900">{ui.skills.title}</h2>
+              <p className="mt-4 text-slate-600 max-w-2xl mx-auto">{ui.skills.subtitle}</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {data.skills.map((skillGroup, index) => (
+                <div key={index} className="bg-white rounded-2xl p-8 shadow-sm border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                  <h3 className="text-xl font-bold text-slate-900 mb-6 pb-4 border-b border-slate-100 flex items-center gap-3">
+                     {index === 0 && <BarChart3 className="text-blue-500" />}
+                     {index === 1 && <Languages className="text-indigo-500" />}
+                     {index === 2 && <PenTool className="text-purple-500" />}
+                    {skillGroup.category}
+                  </h3>
+                  <div className="flex flex-wrap gap-3">
+                    {skillGroup.items.map((skill) => (
+                      <span 
+                        key={skill} 
+                        className="px-3 py-1.5 bg-slate-50 text-slate-700 rounded-lg text-sm font-medium hover:bg-blue-50 hover:text-blue-700 transition-colors cursor-default border border-slate-100"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      );
+    };
+
+    const Experience = ({ data, ui }) => {
+      return (
+        <section id="experience" className="py-24 bg-white">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl font-bold text-slate-900">{ui.experience.title}</h2>
+              <p className="mt-4 text-slate-600">{ui.experience.subtitle}</p>
+            </div>
+
+            <div className="space-y-12">
+              {data.experience.map((job) => (
+                <div key={job.id} className="relative pl-8 md:pl-0 group">
+                  <div className="hidden md:block absolute left-0 top-0 bottom-0 w-px bg-slate-200 transform -translate-x-1/2 left-1/2"></div>
+                  
+                  <div className="md:flex items-start justify-between md:gap-12">
+                    <div className="md:w-1/2 md:text-right mb-2 md:mb-0 md:pt-6">
+                       <span className="inline-block px-4 py-1 bg-slate-100 text-slate-600 rounded-full text-sm font-medium">
+                         {job.period}
+                       </span>
+                    </div>
+
+                    <div className="absolute left-0 md:left-1/2 w-4 h-4 bg-blue-600 rounded-full border-4 border-white shadow-sm transform -translate-x-1/2 mt-1.5 md:mt-8 z-10 group-hover:scale-125 transition-transform"></div>
+
+                    <div className="md:w-1/2 bg-white p-6 rounded-2xl border border-slate-100 hover:border-blue-200 hover:shadow-lg transition-all shadow-sm relative">
+                      <div className="flex items-center gap-3 mb-2">
+                        {job.logo && (
+                          <img src={job.logo} alt={`${job.company} logo`} className="w-8 h-8 object-contain" />
+                        )}
+                        <h3 className="text-xl font-bold text-slate-900">{job.role}</h3>
+                      </div>
+                      <p className="text-blue-600 font-medium mb-4 ml-11">{job.company}</p>
+                      <p className="text-slate-600 text-sm leading-relaxed mb-4 ml-11">
+                        {job.description}
+                      </p>
+                      <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-50 ml-11">
+                        {job.technologies.map(tech => (
+                          <span key={tech} className="text-xs text-slate-500 bg-slate-50 px-2 py-1 rounded">
+                            {tech}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      );
+    };
+
+    const Projects = ({ data, ui }) => {
+      return (
+        <section id="projects" className="py-24 bg-slate-50">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl font-bold text-slate-900">{ui.projects.title}</h2>
+              <p className="mt-4 text-slate-600">{ui.projects.subtitle}</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {data.projects.map((project) => (
+                <div key={project.id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 hover:shadow-2xl transition-all duration-500 flex flex-col group hover:-translate-y-2">
+                  <div className="h-52 bg-slate-200 overflow-hidden relative">
+                     {/* 图片显示区域 */}
+                     <img 
+                        src={project.image} 
+                        alt={project.title}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                        onError={(e) => {
+                           e.target.style.display = 'none'; // 隐藏损坏的图片
+                           e.target.nextSibling.style.display = 'flex'; // 显示备用图标
+                        }}
+                     />
+                     {/* 备用显示 (当图片加载失败时) */}
+                     <div className="absolute inset-0 bg-slate-100 hidden items-center justify-center">
+                        <BookOpen className="text-slate-300" size={48} />
+                     </div>
+
+                     <div className="absolute inset-0 bg-slate-900/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 backdrop-blur-sm">
+                        <a href={project.link} className="px-6 py-2 bg-white rounded-full hover:bg-blue-50 transition-colors text-sm font-bold text-slate-900 flex items-center gap-2">
+                          {ui.projects.viewDetails} <ExternalLink size={16} />
+                        </a>
+                     </div>
+                  </div>
+                  
+                  <div className="p-8 flex-1 flex flex-col">
+                    <h3 className="text-xl font-bold text-slate-900 mb-3 group-hover:text-blue-600 transition-colors leading-snug">{project.title}</h3>
+                    <p className="text-slate-600 text-sm mb-6 flex-1 leading-relaxed">
+                      {project.description}
+                    </p>
+                    <div className="flex flex-wrap gap-2 mt-auto">
+                      {project.tags.map((tag) => (
+                        <span key={tag} className="px-2.5 py-1 bg-slate-50 text-slate-600 text-xs font-semibold rounded-md border border-slate-100">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      );
+    };
+
+    const Contact = ({ data, ui }) => {
+      return (
+        <section id="contact" className="py-24 bg-white">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="bg-slate-900 rounded-[2.5rem] p-8 md:p-20 text-center shadow-2xl shadow-slate-900/20 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600 rounded-full blur-[100px] opacity-20 transform translate-x-1/2 -translate-y-1/2"></div>
+              <div className="absolute bottom-0 left-0 w-96 h-96 bg-purple-600 rounded-full blur-[100px] opacity-20 transform -translate-x-1/2 translate-y-1/2"></div>
+              
+              <div className="relative z-10">
+                <h2 className="text-3xl md:text-5xl font-bold text-white mb-6 tracking-tight">{ui.contact.title}</h2>
+                <p className="text-slate-300 text-lg mb-10 max-w-2xl mx-auto font-light">
+                  {ui.contact.subtitle}
+                </p>
+                
+                <a 
+                  href={`mailto:${data.email}`}
+                  className="inline-flex items-center gap-3 px-10 py-5 bg-white text-slate-900 rounded-full font-bold hover:bg-blue-50 transition-colors text-lg shadow-xl hover:scale-105 transform duration-300"
+                >
+                  {ui.contact.button} <Send size={20} />
+                </a>
+
+                <div className="mt-16 pt-10 border-t border-slate-800 flex flex-col md:flex-row items-center justify-center gap-8 text-slate-400 text-sm font-medium">
+                   <span className="flex items-center gap-2 hover:text-white transition-colors cursor-pointer">
+                     <Mail size={18} /> {data.email}
+                   </span>
+                   <span className="hidden md:inline w-1.5 h-1.5 bg-slate-700 rounded-full"></span>
+                   <span className="flex items-center gap-2 hover:text-white transition-colors cursor-pointer">
+                     <Briefcase size={18} /> {ui.contact.emailText}
+                   </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      );
+    };
+
+    const Footer = ({ data, ui }) => {
+      return (
+        <footer className="bg-slate-50 py-12 border-t border-slate-200">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4 text-slate-400">
+            <p className="text-sm">
+              © {new Date().getFullYear()} {data.name}. {ui.footer}
+            </p>
+            <div className="flex gap-4">
+               {/* Footer Social Icons if needed */}
+            </div>
+          </div>
+        </footer>
+      );
+    };
+
+    // --- 主程序 App ---
+    const App = () => {
+      const [activeSection, setActiveSection] = useState('hero');
+      const [isScrolled, setIsScrolled] = useState(false);
+      const [language, setLanguage] = useState('en');
+
+      const currentData = PORTFOLIO_DATA[language].personal;
+      const currentUI = PORTFOLIO_DATA[language].ui;
+      const fullData = PORTFOLIO_DATA[language];
+
+      useEffect(() => {
+        const handleScroll = () => {
+          setIsScrolled(window.scrollY > 50);
+          const sections = ['hero', 'about', 'skills', 'experience', 'projects', 'contact'];
+          const current = sections.find(section => {
+            const element = document.getElementById(section);
+            if (element) {
+              const rect = element.getBoundingClientRect();
+              return rect.top >= 0 && rect.top <= 300;
+            }
+            return false;
+          });
+          if (current) setActiveSection(current);
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+      }, []);
+
+      const scrollToSection = (id) => {
+        const element = document.getElementById(id);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+          setActiveSection(id);
+        }
+      };
+
+      return (
+        <div className="font-sans selection:bg-blue-200 selection:text-blue-900">
+          <Navigation 
+            activeSection={activeSection} 
+            scrollToSection={scrollToSection}
+            isScrolled={isScrolled}
+            language={language}
+            setLanguage={setLanguage}
+            ui={currentUI}
+          />
+          <Hero scrollToSection={scrollToSection} data={currentData} ui={currentUI} />
+          <About data={fullData} ui={currentUI} />
+          <Skills data={fullData} ui={currentUI} />
+          <Experience data={fullData} ui={currentUI} />
+          <Projects data={fullData} ui={currentUI} />
+          <Contact data={currentData} ui={currentUI} />
+          <Footer data={currentData} ui={currentUI} />
+        </div>
+      );
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
